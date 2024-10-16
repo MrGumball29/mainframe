@@ -6,6 +6,8 @@
     <title>Mainframe AI Chatbot - CVHS Homework Hub</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
     <style>
         :root {
             --primary-color: #2196F3;
@@ -223,10 +225,65 @@
                 height: 3rem;
             }
         }
+
+        /* Add these new styles */
+        .ai-message pre {
+            background-color: #282c34;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+
+        .ai-message code {
+            font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        #theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        body.light-theme {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            color: var(--text-dark);
+        }
+
+        .light-theme .container {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .light-theme #chat-container {
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .light-theme .user-message {
+            background-color: #4CAF50;
+        }
+
+        .light-theme .ai-message {
+            background-color: #2196F3;
+        }
+
+        .light-theme #user-input {
+            background-color: rgba(255, 255, 255, 0.8);
+            color: var(--text-dark);
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <h1>Mainframe AI - CVHS Homework Hub</h1>
+        <button id="theme-toggle">🌓</button>
         <div id="chat-container" class="glass-effect"></div>
         <div class="input-container">
             <input type="text" id="user-input" placeholder="Type your message...">
@@ -240,6 +297,16 @@
     <script>
         $(document).ready(function() {
             const sessionId = Date.now().toString();
+            let isDarkTheme = true;
+
+            function toggleTheme() {
+                isDarkTheme = !isDarkTheme;
+                $('body').toggleClass('light-theme', !isDarkTheme);
+                $('#theme-toggle').text(isDarkTheme ? '🌓' : '🌔');
+            }
+
+            $('#theme-toggle').click(toggleTheme);
+
             function addMessage(sender, message) {
                 const messageClass = sender === 'You' ? 'user-message' : 'ai-message';
                 const newMessage = $(`<div class="message ${messageClass}"><strong>${sender}:</strong> ${message}</div>`);
@@ -248,8 +315,12 @@
 
                 setTimeout(() => {
                     newMessage.css('opacity', '1').css('transform', 'translateY(0)');
+                    $('pre code').each(function(i, block) {
+                        hljs.highlightBlock(block);
+                    });
                 }, 100);
             }
+
             function sendMessage(userInput) {
                 if (userInput) {
                     addMessage('You', userInput);
@@ -272,6 +343,12 @@
                             $('.message:last-child').html(`<strong>Mainframe AI:</strong> ${aiResponse + data.content}`);
                         }
                         aiResponse += data.content;
+                    } else if (data.type === 'formatted') {
+                        typingIndicator.remove();
+                        $('.message:last-child').html(`<strong>Mainframe AI:</strong> ${data.content}`);
+                        $('pre code').each(function(i, block) {
+                            hljs.highlightBlock(block);
+                        });
                     } else if (data.type === 'error') {
                         typingIndicator.remove();
                         addMessage('Error', data.content);
@@ -286,18 +363,21 @@
                     typingIndicator.remove();
                 };
             }
+
             $('#send-button').click(function() {
                 const userInput = $('#user-input').val().trim();
                 if (userInput === '') return;
                 $('#user-input').val('');
                 sendMessage(userInput);
             });
+
             $('#user-input').keypress(function(e) {
                 if (e.which == 13) {
                     $('#send-button').click();
                     return false;
                 }
             });
+
             // Fetch initial message
             $.get(`/init?session_id=${sessionId}`, function(data) {
                 addMessage('Mainframe AI', data.message);
