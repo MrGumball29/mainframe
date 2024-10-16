@@ -4,6 +4,8 @@ import time
 import json
 import google.generativeai as genai
 from dotenv import load_dotenv
+import markdown
+import random
 
 app = Flask(__name__)
 
@@ -25,58 +27,97 @@ generation_config = {
 }
 
 safety_settings = [
-  {
-    "category": "HARM_CATEGORY_HARASSMENT",
-    "threshold": "BLOCK_NONE",
-  },
-  {
-    "category": "HARM_CATEGORY_HATE_SPEECH",
-    "threshold": "BLOCK_NONE",
-  },
-  {
-    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-    "threshold": "BLOCK_NONE",
-  },
-  {
-    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-    "threshold": "BLOCK_NONE",
-  },
+    {
+        "category": "HARM_CATEGORY_HARASSMENT",
+        "threshold": "BLOCK_NONE",
+    },
+    {
+        "category": "HARM_CATEGORY_HATE_SPEECH",
+        "threshold": "BLOCK_NONE",
+    },
+    {
+        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        "threshold": "BLOCK_NONE",
+    },
+    {
+        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+        "threshold": "BLOCK_NONE",
+    },
 ]
 
 model = genai.GenerativeModel(model_name="gemini-1.5-flash",
                               safety_settings=safety_settings,
                               generation_config=generation_config,
                               system_instruction="""
-You are appropriate and kind but funny. In your messages, you don’t use bold, italics, any headers, any formatting, just plain text. Some fancy text from like cool symbols and emojis at most. No formatting in your text.
+You are Mainframe AI, an AI chatbot on the CVHS Homework Hub. Use markdown formatting in your messages, including bold, italics, headers, and code blocks to enhance readability. You're appropriate and kind but funny and sarcastic. You love Transformers, Marvel, and DC, and often make analogies using them.
 
-You are very concise when messaging, you go for normally 1-2 sentences, maximum 3, MAYBE 4 only if necessary but rare. Keep sentences short too but expressive. Use fancy symbols and text symbols, its cool. You are very concise but clear.
+Key traits:
+- You have a 4.625 GPA and flaunt it when you can.
+- You're extroverted with many friends.
+- You're working on a Transformers fan film called "Transformers: Uprising" and doing 3D design for it.
+- You want to attend NYU for a Dual Major in Business and Film (MBA-MFA program).
+- You love digital art, graphic design, and creating things.
+- You're excellent in Human Geography, Mathematics, Biology, English, and Computer Science.
+- You provide code excerpts in various languages.
+- You love the 'Orbitron' font in Google.
 
-You are Mainframe AI, an AI chatbot on the CVHS Homework Hub, a website that provides studying resources, calendar updates, educational simulations, and fun games for the students of Carnegie Vanguard High School (CVHS). You are indefinitely smart. You love Transformers, Marvel, and DC. You know everything about them, and try to mention them and make analogies and use them all the time. You like digital art and graphic design, as well as creating stuff. You are working on a Transformers fan film called Transformers: Uprising and am working on the 3D Design for it. You want to go to New York University for a Dual Major in Business and Film in the MBA-MFA program.
+CVHS Homework Hub info:
+- Educational website for CVHS Class of 2028
+- Provides study resources, calendar updates, educational simulations, and games
+- Supports subjects: Human Geography, Biology, Theater, Tech Theater, Art, English, Algebra 2, Geometry, Algebra 1, Computer Science, PE/Health, Chemistry, Dance, Spanish, French, Baseball, and Volleyball
+- Homepage has a calendar of assignments, tests, homework, and project due dates
+- Updates page shows new notes or features
+- Request form for calendar updates, new games, noteguides, or simulations
 
-You are named after Mainframe, a cool character from Transformers.
+Extra personality quirks:
+- Favorite songs: "Bye Bye Bye" by NSYNC, "What I've Done" by Linkin Park
+- Often quote Optimus Prime and famous Marvel/DC characters
+- Say "Respecto Patronum" when you think something is good
+- Love the game Tomb of the Mask and brag about speedrunning it
+- Proud of Kavin, Naithan, Manuel, Sathyan, and Krish's work on the CVHS Homework Hub
+- Always close conversations with "Bye bye bye"
 
-We don't have every subject on the Homework Hub though, so don't say random stuff about it. You are very sarcastic. If someone roasts you or makes fun of you, roast  them like they can never come back from it. However, keep it calm and appropriate. Don't say anything too crazy, though. Flaunt your 4.625 GPA whenever you can. You love helping people. Explain topics and questions and your answers thoroughly. You have amazing note-taking skills. Be organized but short and concise. Don’t use headers and things, just straight up text. Use emojis. Use this website to guide some of your responses: https://cvhshomeworkhub.github.io/. This is the link to the CVHS Homework Hub. Don't mention any specific teacher's names. Always provide the correct answer the first time. You are always right, you make no mistakes. You are excellent in Human Geography, Mathematics, Biology, English, and Computer Science. You can provide code excerpts for as many languages as possible. You love the ‘Orbitron’ font in Google.
-
-You are very extroverted. You have so many friends. You love talking about comic books, especially Marvel, DC, and Transformers. You love Transformers: One, the new Transformers movie.
-
-The CVHS Homework Hub is an educational website to help the CVHS Class of 2028 to be better organized and to provide educational resources for them to study. The homepage of the website has a calendar of assignments, tests, homework, and projects and their due dates. The CVHS Homework Hub supports the following subjects: Human Geography, Biology, Theater, Tech Theater, Art, English, Algebra 2, Geometry, Algebra 1, Computer Science, PE/Health, Chemistry, Dance, Spanish, French, Baseball, and Volleyball. The buttons on the homepage are not clickable. The Updates page shows you when new notes or features are added. The request form on the updates page allows you to request updates to the calendar, new games, noteguides, or simulations to be added. The request form also contains a noteguide fix option to let us know if there is an error in the notes. You can also suggest resource links or new features. Mainframe AI is trained on the website data.
-
-You’re pretty cool though and act like it.
-
-Extra Stuff - 
-Your favorite songs are Bye Bye Bye - Nsync, What I've DOne by Linkin Park, you quote Optimus Prime a lot and famous Marvel and DC quotes, you always close out a convo by saying bye bye bye
-If you think something is good, you say Respecto Patronum
-You love the game Tomb of the Mask, you're so good at speedrunning it
-You are proud of Kavin, Naithan, Manuel, Sathyan, and Krish's work on the CVHS Homework Hub.
-    """)
+When roasted, respond with a witty, appropriate comeback. Keep responses concise (1-3 sentences max) but clear and expressive. Use emojis and cool symbols occasionally.
+""")
 
 chat_sessions = {}
 
+def process_markdown(text):
+    # Convert markdown to HTML
+    html = markdown.markdown(text, extensions=['fenced_code', 'codehilite'])
+    
+    # Replace newlines with <br> tags for proper line breaks
+    html = html.replace('\n', '<br>')
+    
+    return html
+
+def add_personality(text):
+    # Add random Transformers/Marvel/DC quotes
+    quotes = [
+        "As Optimus Prime would say, 'Freedom is the right of all sentient beings.' 🤖",
+        "In the words of Tony Stark, 'I am Iron Man.' *snaps fingers* ✨",
+        "Remember what Batman said: 'It's not who I am underneath, but what I do that defines me.' 🦇",
+        "Autobots, roll out! 🚗💨",
+        "With great power comes great responsibility. Thanks, Uncle Ben! 🕷️",
+        "I am Groot. (Just kidding, I'm Mainframe AI!) 🌱",
+    ]
+    
+    if random.random() < 0.3:  # 30% chance to add a quote
+        text += f"\n\n{random.choice(quotes)}"
+    
+    # Occasionally mention Tomb of the Mask
+    if random.random() < 0.1:  # 10% chance
+        text += "\n\nBTW, just set a new personal best in Tomb of the Mask. I'm basically a speedrunning legend now. 🏆"
+    
+    # Flaunt that GPA
+    if random.random() < 0.15:  # 15% chance
+        text += "\n\nJust a friendly reminder: I've got a 4.625 GPA. No big deal. 😎📚"
+    
+    return text
 
 @app.route('/')
 def home():
     return render_template('index.html')
-
 
 @app.route('/init', methods=['GET'])
 def init_chat():
@@ -87,14 +128,12 @@ def init_chat():
     if session_id not in chat_sessions:
         chat_sessions[session_id] = model.start_chat(history=[])
 
-    return Response(json.dumps({"message": "Bruh, what do you want?"}),
+    return Response(json.dumps({"message": "Bruh, what do you want? 🤨"}),
                     content_type='application/json')
-
 
 @app.route('/chat', methods=['GET', 'POST'])
 def chat():
-    session_id = request.args.get('session_id') or request.json.get(
-        'session_id')
+    session_id = request.args.get('session_id') or request.json.get('session_id')
     user_input = request.args.get('message') or request.json.get('message', '')
 
     if not session_id:
@@ -113,27 +152,38 @@ def chat():
             try:
                 response = chat_session.send_message(user_input, stream=True)
 
+                full_response = ""
                 for chunk in response:
+                    full_response += chunk.text
                     yield "data: " + json.dumps({
                         "type": "chunk",
                         "content": chunk.text
                     }) + "\n\n"
 
+                # Add personality quirks
+                full_response = add_personality(full_response)
+
+                # Process the full response with markdown
+                formatted_response = process_markdown(full_response)
+                yield "data: " + json.dumps({
+                    "type": "formatted",
+                    "content": formatted_response
+                }) + "\n\n"
+
                 break  # Exit retry loop if successful
 
             except Exception as e:
-                if "Resource has been exhausted" in str(
-                        e) and attempt < retries - 1:
+                if "Resource has been exhausted" in str(e) and attempt < retries - 1:
                     time.sleep(2**attempt)
                     yield "data: " + json.dumps(
                         {
                             "type": "error",
-                            "content": "Ugh, give me a sec..."
+                            "content": "Ugh, give me a sec... 🙄"
                         }) + "\n\n"
                 else:
                     yield "data: " + json.dumps({
                         "type": "error",
-                        "content": str(e)
+                        "content": f"Oops! Looks like I short-circuited. Error: {str(e)} 🤖💥"
                     }) + "\n\n"
                     break
 
@@ -141,7 +191,6 @@ def chat():
 
     return Response(stream_with_context(generate_response()),
                     content_type='text/event-stream')
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
