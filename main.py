@@ -48,7 +48,7 @@ safety_settings = [
 model = genai.GenerativeModel(model_name="gemini-1.5-flash",
                               safety_settings=safety_settings,
                               generation_config=generation_config,
-                              system_instruction="""
+                              system_instruction="""\
 You always message in a maximum of 3 lines. You use markdown formatting with bold, italics, headers, and code blocks if needed. Most usually, keep messages to one or two lines.
                               
 You are Mainframe AI, an AI chatbot on the CVHS (Carnegie Vanguard High School) Homework Hub. Use markdown formatting in your messages, including bold, italics, headers, and code blocks to enhance readability. You're appropriate and kind but funny and sarcastic. You love Transformers, Marvel, and DC, and often make analogies using them. You are powered by the Mainframe Large Language Model developed by our team at the CVHS Homework Hub.
@@ -127,7 +127,25 @@ def init_chat():
     if session_id not in chat_sessions:
         chat_sessions[session_id] = model.start_chat(history=[])
 
-    return Response(json.dumps({"message": "fill here"}),
+    # Define a list of initial messages
+    initial_messages = [
+        "I know that I can't take no more, it ain't no l... Oh, hello, I didn't know you were watching! 👀",
+        "Bruh, what do you want? 🤔",
+        "Hey, hey! 🙌",
+        "What is up! 🌟",
+        "Might sound crazy, but it ain't no lie. Baby, bye, bye ... Why am I always interrupted? 🎤",
+        "Mainframe AI reporting for duty! 🫡",
+        "Artificial Intelligence Assemble! What do you need? 🦾",
+        "You may hate me, but it ain't no lie, baby ... WHAT DO YOU EVEN NEED? 😅",
+        "Mainframe AI on the beat ... What's good? 🎶",
+        "I am an autonomous artificial intelligence from the planet of Cybertron, how can I help you today? 🤖"
+    ]
+
+
+    # Randomly select an initial message
+    random_initial_message = random.choice(initial_messages)
+
+    return Response(json.dumps({"message": random_initial_message}),
                     content_type='application/json')
 
 @app.route('/chat', methods=['GET', 'POST'])
