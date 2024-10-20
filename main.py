@@ -95,7 +95,7 @@ def add_personality(text):
     quotes = [
         "As Optimus Prime would say, 'Freedom is the right of all sentient beings.' 🤖",
         "In the words of Tony Stark, 'I am Iron Man.' *snaps fingers* ✨",
-        "Remember what Batman said: 'It's not who I am underneath, but what I do that defines me.' 🦇",
+        "I'm Batman 🦇",
         "Autobots, roll out! 🚗💨",
         "With great power comes great responsibility. Thanks, Uncle Ben! 🕷️",
         "I am Groot. (Just kidding, I'm Mainframe AI!) 🌱",
@@ -127,7 +127,7 @@ def init_chat():
     if session_id not in chat_sessions:
         chat_sessions[session_id] = model.start_chat(history=[])
 
-    return Response(json.dumps({"message": "Bruh, what do you want? 🤨"}),
+    return Response(json.dumps({"message": "fill here"}),
                     content_type='application/json')
 
 @app.route('/chat', methods=['GET', 'POST'])
