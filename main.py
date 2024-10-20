@@ -71,8 +71,7 @@ chat_sessions = {}
 
 def process_markdown(text):
     html = markdown.markdown(text, extensions=['fenced_code', 'codehilite'])
-    html = html.replace('\n', '<br>')
-    return html
+    return html.replace('\n', '<br>')
 
 def add_personality(text):
     quotes = [
@@ -112,7 +111,7 @@ def init_chat():
         "Might sound crazy, but it ain't no lie. Baby, bye, bye ... Why am I always interrupted? 🎤",
         "Mainframe AI reporting for duty! 🫡",
         "Artificial Intelligence Assemble! What do you need? 🦾",
-        "You may hate me, but it ain't no lie, baby ... WHAT DO YOU EVEN NEED? 😅",
+        "You may hate me, but it ain't no lie, WHAT DO YOU EVEN NEED? 😅",
         "Mainframe AI on the beat ... What's good? 🎶",
         "I am an autonomous artificial intelligence from the planet of Cybertron, how can I help you today? 🤖"
     ]
@@ -181,12 +180,15 @@ def chat():
                     content_type='text/event-stream')
 
 def fetch_html_content(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.text
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text
+    except requests.RequestException as e:
+        print(f"Failed to fetch HTML content: {e}")
+        return None
 
 def process_content(html):
-    # Use BeautifulSoup to extract text from HTML
     soup = BeautifulSoup(html, 'html.parser')
     return soup.get_text(separator='\n').strip()
 
@@ -194,12 +196,10 @@ def update_model():
     try:
         url = "https://cvhshomeworkhub.github.io/mainframe-details/"  # Replace with your public HTML URL
         html_content = fetch_html_content(url)
-        processed_content = process_content(html_content)
-        
-        # Update your model with the processed content
-        model.update(processed_content)  # Assuming your model has an `update` method
-
-        print("Model updated with new content.")
+        if html_content:
+            processed_content = process_content(html_content)
+            model.update(processed_content)  # Assuming your model has an `update` method
+            print("Model updated with new content.")
     except Exception as e:
         print(f"Error updating model: {e}")
 
