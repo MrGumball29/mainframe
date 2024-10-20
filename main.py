@@ -192,11 +192,13 @@ def process_content(html):
 
 def update_model():
     try:
-        url = "https://example.com/your-public-page.html"  # Replace with your public HTML URL
+        url = "https://www.example.com/my-public-page.html"  # Replace with your public HTML URL
         html_content = fetch_html_content(url)
         processed_content = process_content(html_content)
-        # Update your model here (pseudo code)
-        # model.update(processed_content)
+        
+        # Update your model with the processed content
+        model.update(processed_content)  # Assuming your model has an `update` method
+
         print("Model updated with new content.")
     except Exception as e:
         print(f"Error updating model: {e}")
