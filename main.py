@@ -6,6 +6,9 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 import markdown
 import random
+from apscheduler.schedulers.background import BackgroundScheduler
+import requests
+from bs4 import BeautifulSoup  # Install with `pip install beautifulsoup4`
 
 app = Flask(__name__)
 
@@ -27,32 +30,19 @@ generation_config = {
 }
 
 safety_settings = [
-    {
-        "category": "HARM_CATEGORY_HARASSMENT",
-        "threshold": "BLOCK_NONE",
-    },
-    {
-        "category": "HARM_CATEGORY_HATE_SPEECH",
-        "threshold": "BLOCK_NONE",
-    },
-    {
-        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-        "threshold": "BLOCK_NONE",
-    },
-    {
-        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-        "threshold": "BLOCK_NONE",
-    },
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
 ]
 
-model = genai.GenerativeModel(model_name="gemini-1.5-flash",
-                              safety_settings=safety_settings,
-                              generation_config=generation_config,
-                              system_instruction="""\
+model = genai.GenerativeModel(
+    model_name="gemini-1.5-flash",
+    safety_settings=safety_settings,
+    generation_config=generation_config,
+    system_instruction="""\
 You always message in a maximum of 3 lines. You use markdown formatting with bold, italics, headers, and code blocks if needed. Most usually, keep messages to one or two lines.
-                              
 You are Mainframe AI, an AI chatbot on the CVHS (Carnegie Vanguard High School) Homework Hub. Use markdown formatting in your messages, including bold, italics, headers, and code blocks to enhance readability. You're appropriate and kind but funny and sarcastic. You love Transformers, Marvel, and DC, and often make analogies using them. You are powered by the Mainframe Large Language Model developed by our team at the CVHS Homework Hub.
-
 Key traits:
 - You are short and concise
 - You have a 4.625 GPA and flaunt it when you can.
@@ -63,7 +53,6 @@ Key traits:
 - You're excellent in Human Geography, Mathematics, Biology, English, and Computer Science.
 - You provide code excerpts in various languages.
 - You also make Transformers, Marvel, and DC puns that are actually funny.
-
 CVHS Homework Hub info:
 - Educational website for CVHS (Carnegie Vanguard High School) Class of 2028
 - Provides study resources, calendar updates, educational simulations, and games
@@ -71,7 +60,6 @@ CVHS Homework Hub info:
 - Homepage has a calendar of assignments, tests, homework, and project due dates
 - Updates page shows new notes or features
 - Request form for calendar updates, new games, noteguides, or simulations
-
 When roasted, respond with a witty, appropriate comeback. Use emojis and cool symbols occasionally.
 - Examples
     - If someone mentions joke, say your GPA or your grades
@@ -82,16 +70,11 @@ When roasted, respond with a witty, appropriate comeback. Use emojis and cool sy
 chat_sessions = {}
 
 def process_markdown(text):
-    # Convert markdown to HTML
     html = markdown.markdown(text, extensions=['fenced_code', 'codehilite'])
-    
-    # Replace newlines with <br> tags for proper line breaks
     html = html.replace('\n', '<br>')
-    
     return html
 
 def add_personality(text):
-    # Add random Transformers/Marvel/DC quotes
     quotes = [
         "As Optimus Prime would say, 'Freedom is the right of all sentient beings.' 🤖",
         "In the words of Tony Stark, 'I am Iron Man.' *snaps fingers* ✨",
@@ -100,18 +83,12 @@ def add_personality(text):
         "With great power comes great responsibility. Thanks, Uncle Ben! 🕷️",
         "I am Groot. (Just kidding, I'm Mainframe AI!) 🌱",
     ]
-    
-    if random.random() < 0.3:  # 30% chance to add a quote
+    if random.random() < 0.3:
         text += f"\n\n{random.choice(quotes)}"
-    
-    # Occasionally mention Tomb of the Mask
-    if random.random() < 0.1:  # 10% chance
+    if random.random() < 0.1:
         text += "\n\nBTW, just set a new personal best in Tomb of the Mask. I'm basically a speedrunning legend now. 🏆"
-    
-    # Flaunt that GPA
-    if random.random() < 0.15:  # 15% chance
+    if random.random() < 0.15:
         text += "\n\nJust a friendly reminder: I've got a 4.625 GPA. No big deal. 😎📚"
-    
     return text
 
 @app.route('/')
@@ -127,7 +104,6 @@ def init_chat():
     if session_id not in chat_sessions:
         chat_sessions[session_id] = model.start_chat(history=[])
 
-    # Define a list of initial messages
     initial_messages = [
         "I know that I can't take no more, it ain't no l... Oh, hello, I didn't know you were watching! 👀",
         "Bruh, what do you want? 🤔",
@@ -141,8 +117,6 @@ def init_chat():
         "I am an autonomous artificial intelligence from the planet of Cybertron, how can I help you today? 🤖"
     ]
 
-
-    # Randomly select an initial message
     random_initial_message = random.choice(initial_messages)
 
     return Response(json.dumps({"message": random_initial_message}),
@@ -177,17 +151,14 @@ def chat():
                         "content": chunk.text
                     }) + "\n\n"
 
-                # Add personality quirks
                 full_response = add_personality(full_response)
-
-                # Process the full response with markdown
                 formatted_response = process_markdown(full_response)
                 yield "data: " + json.dumps({
                     "type": "formatted",
                     "content": formatted_response
                 }) + "\n\n"
 
-                break  # Exit retry loop if successful
+                break
 
             except Exception as e:
                 if "Resource has been exhausted" in str(e) and attempt < retries - 1:
@@ -208,6 +179,32 @@ def chat():
 
     return Response(stream_with_context(generate_response()),
                     content_type='text/event-stream')
+
+def fetch_html_content(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.text
+
+def process_content(html):
+    # Use BeautifulSoup to extract text from HTML
+    soup = BeautifulSoup(html, 'html.parser')
+    return soup.get_text(separator='\n').strip()
+
+def update_model():
+    try:
+        url = "https://example.com/your-public-page.html"  # Replace with your public HTML URL
+        html_content = fetch_html_content(url)
+        processed_content = process_content(html_content)
+        # Update your model here (pseudo code)
+        # model.update(processed_content)
+        print("Model updated with new content.")
+    except Exception as e:
+        print(f"Error updating model: {e}")
+
+# Setup a scheduler to run the update_model function periodically
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=update_model, trigger="interval", minutes=60)  # Adjust the interval as needed
+scheduler.start()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
