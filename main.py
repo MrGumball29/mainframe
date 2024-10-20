@@ -192,7 +192,7 @@ def process_content(html):
 
 def update_model():
     try:
-        url = "https://www.example.com/my-public-page.html"  # Replace with your public HTML URL
+        url = "https://cvhshomeworkhub.github.io/mainframe-details/"  # Replace with your public HTML URL
         html_content = fetch_html_content(url)
         processed_content = process_content(html_content)
         
