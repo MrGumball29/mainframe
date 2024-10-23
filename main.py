@@ -6,7 +6,6 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 import markdown
 import random
-from apscheduler.schedulers.background import BackgroundScheduler
 import requests
 from bs4 import BeautifulSoup  # Install with `pip install beautifulsoup4`
 
@@ -221,11 +220,6 @@ def update_model():
             print("Model updated with new content.")
     except Exception as e:
         print(f"Error updating model: {e}")
-
-# Setup a scheduler to run the update_model function periodically
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=update_model, trigger="interval", minutes=60)  # Adjust the interval as needed
-scheduler.start()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
